@@ -100,6 +100,9 @@ class MainActivity : Activity() {
                 downloadAndInstall(getString(R.string.app_name), SELF_APK_URL)
             })
         }
+        rows.add(Row("Диагностика", "Что стоит на приставке, что запускается само и тратит интернет", "Открыть") {
+            startActivity(Intent(this, DiagnosticsActivity::class.java))
+        })
         for (app in catalog) {
             val installed = installedVersion(app.pkg)
             val (desc, action) = when {
