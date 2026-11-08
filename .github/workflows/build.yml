@@ -22,13 +22,17 @@ jobs:
         env:
           KEYSTORE_B64: ${{ secrets.KEYSTORE_B64 }}
         run: |
-          test -n "$KEYSTORE_B64" || { echo "no KEYSTORE_B64 secret"; exit 1; }
+          if [ -z "$KEYSTORE_B64" ]; then echo "::warning::no KEYSTORE_B64 secret, building unsigned, no release"; echo "SIGN=0" >> "$GITHUB_ENV"; exit 0; fi
           echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/release.p12"
+          echo "SIGN=1" >> "$GITHUB_ENV"
       - name: Build
         env:
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
-        run: gradle --no-daemon assembleRelease -PversionCode=${{ github.run_number }} -PversionName=1.0.${{ github.run_number }} -Pkeystore="$RUNNER_TEMP/release.p12"
+        run: |
+          KS=""; [ "$SIGN" = 1 ] && KS="-Pkeystore=$RUNNER_TEMP/release.p12"
+          gradle --no-daemon assembleRelease -PversionCode=${{ github.run_number }} -PversionName=1.0.${{ github.run_number }} $KS
       - name: Release
+        if: env.SIGN == '1'
         env:
           GH_TOKEN: ${{ github.token }}
           NOTES: ${{ github.event.head_commit.message }}
