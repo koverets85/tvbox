@@ -105,6 +105,10 @@ class MainActivity : Activity() {
                 if (sv == null) "Не удалось проверить — нажмите, чтобы проверить ещё раз"
                 else "У вас последняя версия ${myVersionName()}", "Проверить") { load() })
         }
+        rows.add(Row("Программы", "Удалить пачкой, выключить, убрать автозапуск (нужен root)", "Открыть") {
+            startActivity(Intent(this, AppsActivity::class.java))
+        })
+        rows.add(Row("Очистить мусор", "Кэш всех программ и временные файлы", "Очистить") { cleanJunk() })
         rows.add(Row("Диагностика", "Что стоит на приставке, что запускается само и тратит интернет", "Открыть") {
             startActivity(Intent(this, DiagnosticsActivity::class.java))
         })
@@ -147,6 +151,24 @@ class MainActivity : Activity() {
                 runOnUiThread { status.text = "Ошибка: ${e.message}" }
             } finally {
                 busy = false
+            }
+        }.start()
+    }
+
+    private fun cleanJunk() {
+        if (busy) return
+        busy = true
+        status.text = "Чищу…"
+        Thread {
+            fun free() = android.os.StatFs(android.os.Environment.getDataDirectory().path).availableBytes
+            val before = free()
+            val ok = Root.check()
+            if (ok) Root.run("pm trim-caches 999G; rm -rf /data/local/tmp/* /sdcard/Android/data/*/cache/* 2>/dev/null", 180)
+            cacheDir.listFiles()?.forEach { it.deleteRecursively() }
+            val freed = (free() - before).coerceAtLeast(0) / 1048576
+            runOnUiThread {
+                busy = false
+                status.text = if (ok) "Очищено: $freed МБ" else "Нужен root: разрешите TVHub в Magisk и повторите"
             }
         }.start()
     }
