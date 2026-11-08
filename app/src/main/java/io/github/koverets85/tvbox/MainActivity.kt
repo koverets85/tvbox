@@ -105,6 +105,9 @@ class MainActivity : Activity() {
                 if (sv == null) "Не удалось проверить — нажмите, чтобы проверить ещё раз"
                 else "У вас последняя версия ${myVersionName()}", "Проверить") { load() })
         }
+        rows.add(Row("Главный экран TVHub (проба)", "Свой главный экран: в нём «⚙ Вид» — темы, плитки, часы, погода", "Открыть") {
+            startActivity(Intent(this, LauncherActivity::class.java))
+        })
         rows.add(Row("Программы", "Удалить пачкой, выключить, убрать автозапуск (нужен root)", "Открыть") {
             startActivity(Intent(this, AppsActivity::class.java))
         })

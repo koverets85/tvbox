@@ -28,6 +28,19 @@
         </activity>
         <activity android:name=".DiagnosticsActivity" android:exported="false" />
         <activity android:name=".AppsActivity" android:exported="false" />
+        <activity
+            android:name=".LauncherActivity"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:stateNotNeeded="true"
+            android:excludeFromRecents="true"
+            android:theme="@style/AppTheme">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.HOME" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
         <receiver android:name=".InstallReceiver" android:exported="false" />
     </application>
 </manifest>
