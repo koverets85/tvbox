@@ -46,7 +46,15 @@ object Diagnostics {
         val mode = if (Build.VERSION.SDK_INT >= 29)
             ops.unsafeCheckOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS, Process.myUid(), ctx.packageName)
         else ops.checkOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS, Process.myUid(), ctx.packageName)
-        return mode == AppOpsManager.MODE_ALLOWED
+        if (mode == AppOpsManager.MODE_ALLOWED) return true
+        if (mode == AppOpsManager.MODE_DEFAULT &&
+            ctx.checkSelfPermission(android.Manifest.permission.PACKAGE_USAGE_STATS) == PackageManager.PERMISSION_GRANTED) return true
+        // some firmwares report the op oddly — just try to read stats
+        return try {
+            val usm = ctx.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
+            val now = System.currentTimeMillis()
+            usm.queryUsageStats(UsageStatsManager.INTERVAL_DAILY, now - 86400000L * 7, now).isNotEmpty()
+        } catch (e: Exception) { false }
     }
 
     private fun mb(b: Long) = String.format(Locale.US, "%.1f МБ", b / 1048576.0)
@@ -136,6 +144,11 @@ object Diagnostics {
         val week = 7L * 24 * 3600 * 1000
         val now = System.currentTimeMillis()
         val access = hasUsageAccess(ctx)
+        line("Доступ к статистике: " + (if (access) "есть" else "нет") +
+            " (appop=" + try {
+                val ops = ctx.getSystemService(Context.APP_OPS_SERVICE) as AppOpsManager
+                @Suppress("DEPRECATION") ops.checkOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS, Process.myUid(), ctx.packageName)
+            } catch (e: Exception) { -1 } + ")")
         if (access) {
             try {
                 val usm = ctx.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager

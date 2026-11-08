@@ -39,6 +39,13 @@ class DiagnosticsActivity : Activity() {
         val buttons = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
         fun button(label: String, onClick: () -> Unit) = Button(this).apply {
             text = label; setOnClickListener { onClick() }
+            isAllCaps = false
+            textSize = 17f
+            setTextColor(0xFFFFFFFF.toInt())
+            background = getDrawable(R.drawable.item_bg)
+            stateListAnimator = null
+            setPadding(pad, pad / 2, pad, pad / 2)
+            setOnFocusChangeListener { v, has -> v.animate().scaleX(if (has) 1.08f else 1f).scaleY(if (has) 1.08f else 1f).setDuration(120).start() }
             buttons.addView(this, LinearLayout.LayoutParams(WRAP_CONTENT, WRAP_CONTENT).apply { marginEnd = pad / 2 })
         }
         val send = button("Отправить отчёт Claude") { send() }
