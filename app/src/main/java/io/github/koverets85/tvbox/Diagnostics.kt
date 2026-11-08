@@ -114,6 +114,26 @@ object Diagnostics {
             } catch (e: Exception) { }
         }
 
+        // root: real Wi-Fi logs from kernel and system
+        if (Root.check()) {
+            line("ROOT: есть")
+            val cmds = listOf(
+                "Wi-Fi настройки" to "for k in wifi_sleep_policy wifi_scan_always_enabled wifi_networks_available_notification_on ble_scan_always_enabled; do echo \"\$k=\$(settings get global \$k)\"; done",
+                "/proc/net/wireless" to "cat /proc/net/wireless",
+                "Wi-Fi свойства" to "getprop | grep -iE 'wifi|wlan|vlsi' | head -40",
+                "Файлы драйвера" to "ls -la /vendor/lib/modules 2>/dev/null | grep -iE 'vlsi|wifi|wlan|sdio'; find /vendor/etc /system/etc /vendor/firmware -maxdepth 3 -iname '*vlsi*' 2>/dev/null | head -20",
+                "dmesg (Wi-Fi)" to "dmesg | grep -iE 'wlan|vlsi|wifi|sdio|cfg80211|deauth|disassoc|beacon|connect' | tail -n 150",
+                "logcat (Wi-Fi)" to "logcat -d -b main,system -v time | grep -iE 'wpa_supplicant|ClientModeImpl|WifiStateMachine|DhcpClient|CTRL-EVENT|SupplicantStaIface|NetworkMonitor' | tail -n 200",
+            )
+            for ((title, cmd) in cmds) {
+                line("== $title ==")
+                line((Root.run(cmd) ?: "(ошибка)").trimEnd().take(30000))
+            }
+            line()
+        } else {
+            line("ROOT: нет (или не разрешён в Magisk)")
+        }
+
         val home = pm.resolveActivity(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME), 0)
         line("Главный экран (лаунчер): ${home?.activityInfo?.packageName}")
         val homes = pm.queryIntentActivities(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME), 0)
