@@ -1,0 +1,11 @@
+{
+  "apps": [
+    {
+      "package": "org.smarttube.stable",
+      "name": "SmartTube",
+      "description": "YouTube для ТВ без рекламы",
+      "versionName": "32.71",
+      "apk": "https://github.com/yuliskov/SmartTube/releases/download/32.71s/SmartTube_stable_32.71_armeabi-v7a.apk"
+    }
+  ]
+}

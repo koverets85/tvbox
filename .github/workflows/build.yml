@@ -1,0 +1,39 @@
+name: build
+on:
+  push:
+    branches: [main]
+    paths-ignore: ['catalog.json', 'README.md']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - name: Keystore
+        env:
+          KEYSTORE_B64: ${{ secrets.KEYSTORE_B64 }}
+        run: |
+          test -n "$KEYSTORE_B64" || { echo "no KEYSTORE_B64 secret"; exit 1; }
+          echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/release.p12"
+      - name: Build
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+        run: gradle --no-daemon assembleRelease -PversionCode=${{ github.run_number }} -PversionName=1.0.${{ github.run_number }} -Pkeystore="$RUNNER_TEMP/release.p12"
+      - name: Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          NOTES: ${{ github.event.head_commit.message }}
+          N: ${{ github.run_number }}
+        run: |
+          cp app/build/outputs/apk/release/app-release.apk tvbox.apk
+          printf '{"versionCode":%s,"versionName":"1.0.%s"}\n' "$N" "$N" > version.json
+          gh release create "v1.0.$N" tvbox.apk version.json --title "1.0.$N" --notes "${NOTES:-build $N}" --latest
