@@ -80,6 +80,32 @@ object Diagnostics {
                 "${Settings.Global.getString(ctx.contentResolver, "private_dns_specifier") ?: ""}")
         } catch (e: Exception) { line("Сеть: ошибка ${e.message}") }
 
+        // Wi-Fi details: signal, band, chip (sysfs may be closed by SELinux — then just skipped)
+        try {
+            val wm = ctx.applicationContext.getSystemService(Context.WIFI_SERVICE) as android.net.wifi.WifiManager
+            @Suppress("DEPRECATION")
+            val wi = wm.connectionInfo
+            line("Wi-Fi: включён=${wm.isWifiEnabled}, сигнал ${wi?.rssi} дБм, частота ${wi?.frequency} МГц, " +
+                "скорость ${wi?.linkSpeed} Мбит/с, 5ГГц поддерж.=${wm.is5GHzBandSupported}")
+        } catch (e: Exception) { line("Wi-Fi: ошибка ${e.message}") }
+        fun readSmall(path: String): String? = try {
+            java.io.File(path).readText().trim().take(4000)
+        } catch (e: Exception) { null }
+        try {
+            java.io.File("/sys/bus/sdio/devices").listFiles()?.forEach { d ->
+                line("SDIO ${d.name}: vendor=${readSmall(d.path + "/vendor")} device=${readSmall(d.path + "/device")}")
+            }
+        } catch (e: Exception) { }
+        readSmall("/proc/modules")?.let { m ->
+            line("Модули ядра: " + m.lines().map { it.substringBefore(' ') }.joinToString())
+        }
+        for (prop in listOf("wifi.interface", "ro.boot.wifi_chip", "persist.vendor.wifi.chip", "vendor.wifi.chip", "ro.product.name", "ro.build.version.incremental")) {
+            try {
+                val v = Runtime.getRuntime().exec(arrayOf("getprop", prop)).inputStream.bufferedReader().readText().trim()
+                if (v.isNotEmpty()) line("prop $prop = $v")
+            } catch (e: Exception) { }
+        }
+
         val home = pm.resolveActivity(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME), 0)
         line("Главный экран (лаунчер): ${home?.activityInfo?.packageName}")
         val homes = pm.queryIntentActivities(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME), 0)
