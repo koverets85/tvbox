@@ -17,6 +17,20 @@ class DiagnosticsActivity : Activity() {
     private lateinit var text: TextView
     private lateinit var status: TextView
     private var report = ""
+    private lateinit var scroll: ScrollView
+
+    /** Remote: left/right move between buttons, up/down scroll the report. */
+    override fun dispatchKeyEvent(event: android.view.KeyEvent): Boolean {
+        val code = event.keyCode
+        if (code == android.view.KeyEvent.KEYCODE_DPAD_UP || code == android.view.KeyEvent.KEYCODE_DPAD_DOWN) {
+            if (event.action == android.view.KeyEvent.ACTION_DOWN) {
+                val step = (scroll.height * 0.8).toInt()
+                scroll.smoothScrollBy(0, if (code == android.view.KeyEvent.KEYCODE_DPAD_UP) -step else step)
+            }
+            return true
+        }
+        return super.dispatchKeyEvent(event)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -32,7 +46,11 @@ class DiagnosticsActivity : Activity() {
         button("Обновить") { refresh() }
         status = TextView(this).apply { textSize = 15f; setTextColor(0xB3FFFFFF.toInt()); setPadding(0, pad / 3, 0, pad / 3) }
         text = TextView(this).apply { textSize = 12f; typeface = Typeface.MONOSPACE; setTextColor(0xFFFFFFFF.toInt()) }
-        val scroll = ScrollView(this).apply { isFocusable = true; addView(text) }
+        scroll = ScrollView(this).apply {
+            isFocusable = false
+            descendantFocusability = android.view.ViewGroup.FOCUS_BLOCK_DESCENDANTS
+            addView(text)
+        }
         root.addView(buttons)
         root.addView(status)
         root.addView(scroll, LinearLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT))
@@ -52,7 +70,7 @@ class DiagnosticsActivity : Activity() {
             runOnUiThread {
                 report = r
                 text.text = r
-                status.text = (if (Diagnostics.hasUsageAccess(this)) "Доступ к статистике: есть" else
+                status.text = "◀ ▶ — кнопки,  ▲ ▼ — листать отчёт.  " + (if (Diagnostics.hasUsageAccess(this)) "Доступ к статистике: есть" else
                     "Доступ к статистике: НЕТ — нажмите «Доступ к статистике» и включите для ${getString(R.string.app_name)}")
             }
         }.start()

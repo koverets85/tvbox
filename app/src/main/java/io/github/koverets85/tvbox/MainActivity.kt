@@ -95,10 +95,15 @@ class MainActivity : Activity() {
     private fun rebuild() {
         rows.clear()
         val sv = selfVersion
+        val appName = getString(R.string.app_name)
         if (sv != null && sv.versionCode > myVersionCode()) {
-            rows.add(Row("Обновить ${getString(R.string.app_name)}", "Новая версия ${sv.versionName}", "Обновить") {
-                downloadAndInstall(getString(R.string.app_name), SELF_APK_URL)
+            rows.add(Row("Обновить $appName", "Есть новая версия ${sv.versionName} (у вас ${myVersionName()})", "Обновить") {
+                downloadAndInstall(appName, SELF_APK_URL)
             })
+        } else {
+            rows.add(Row("Обновление $appName",
+                if (sv == null) "Не удалось проверить — нажмите, чтобы проверить ещё раз"
+                else "У вас последняя версия ${myVersionName()}", "Проверить") { load() })
         }
         rows.add(Row("Диагностика", "Что стоит на приставке, что запускается само и тратит интернет", "Открыть") {
             startActivity(Intent(this, DiagnosticsActivity::class.java))
