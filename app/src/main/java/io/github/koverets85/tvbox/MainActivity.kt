@@ -55,6 +55,7 @@ class MainActivity : Activity() {
         if (Build.VERSION.SDK_INT >= 33) registerReceiver(refreshReceiver, filter, RECEIVER_NOT_EXPORTED)
         else registerReceiver(refreshReceiver, filter)
         load()
+        BlackBox.startAsync(this)
     }
 
     override fun onDestroy() {

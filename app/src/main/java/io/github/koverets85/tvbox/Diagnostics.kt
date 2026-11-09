@@ -130,6 +130,11 @@ object Diagnostics {
                 "Сбои системы (dropbox)" to "ls -lt /data/system/dropbox | head -40",
                 "Последние зависания и падения" to "cd /data/system/dropbox && for f in \$(ls -t | grep -iE 'watchdog|anr|system_server|panic|kmsg|tombstone|lowmem|native_crash' | head -8); do echo \"--- \$f\"; (zcat \$f 2>/dev/null || cat \$f) | head -30; done",
                 "pstore (журнал до сбоя)" to "ls -la /sys/fs/pstore 2>/dev/null; for f in /sys/fs/pstore/*; do echo \"--- \$f\"; tail -n 60 \$f; done 2>/dev/null",
+                "Память (чип)" to "cat /proc/meminfo | head -3; for d in /sys/block/mmcblk0 /sys/block/mmcblk0/device; do for k in size name manfid oemid date type; do [ -f \$d/\$k ] && echo \"\$k=\$(cat \$d/\$k)\"; done; done",
+                "Чёрный ящик: эта сессия" to "cat ${BlackBox.DIR}/started.txt 2>/dev/null; tail -n 40 ${BlackBox.DIR}/vitals.txt 2>/dev/null",
+                "Чёрный ящик: ДО перезагрузки — нагрузка" to "tail -n 80 ${BlackBox.DIR}/prev-vitals.txt 2>/dev/null || echo нет",
+                "Чёрный ящик: ДО перезагрузки — ядро" to "tail -n 120 ${BlackBox.DIR}/prev-kmsg.txt 2>/dev/null || echo нет",
+                "Чёрный ящик: ДО перезагрузки — система" to "tail -n 250 ${BlackBox.DIR}/prev-logcat.txt 2>/dev/null | grep -vE ' [VD]/' | tail -n 150 || echo нет",
                 "logcat (Wi-Fi)" to "logcat -d -b main,system -v time | grep -iE 'wpa_supplicant|ClientModeImpl|WifiStateMachine|DhcpClient|CTRL-EVENT|SupplicantStaIface|NetworkMonitor' | tail -n 200",
             )
             for ((title, cmd) in cmds) {
