@@ -123,6 +123,13 @@ object Diagnostics {
                 "Wi-Fi свойства" to "getprop | grep -iE 'wifi|wlan|vlsi' | head -40",
                 "Файлы драйвера" to "ls -la /vendor/lib/modules 2>/dev/null | grep -iE 'vlsi|wifi|wlan|sdio'; find /vendor/etc /system/etc /vendor/firmware -maxdepth 3 -iname '*vlsi*' 2>/dev/null | head -20",
                 "dmesg (Wi-Fi)" to "dmesg | grep -iE 'wlan|vlsi|wifi|sdio|cfg80211|deauth|disassoc|beacon|connect' | tail -n 150",
+                "Причина последней перезагрузки" to "for p in sys.boot.reason ro.boot.bootreason persist.sys.boot.reason ro.boot.reboot_mode; do echo \"\$p=\$(getprop \$p)\"; done; cat /proc/cmdline | tr ' ' '\\n' | grep -iE 'reboot|reason'",
+                "Температура" to "for z in /sys/class/thermal/thermal_zone*; do echo \"\$(cat \$z/type) \$(cat \$z/temp)\"; done",
+                "Нагрузка сейчас" to "cat /proc/loadavg; top -b -n 1 -m 12 2>/dev/null | head -22",
+                "dmesg (зависания, память, перегрев)" to "dmesg | grep -iE 'oom|lowmem|lmk|killed process|thermal|hung_task|watchdog|panic|blocked for more|mmc.*(error|timeout)' | tail -n 60",
+                "Сбои системы (dropbox)" to "ls -lt /data/system/dropbox | head -40",
+                "Последние зависания и падения" to "cd /data/system/dropbox && for f in \$(ls -t | grep -iE 'watchdog|anr|system_server|panic|kmsg|tombstone|lowmem|native_crash' | head -8); do echo \"--- \$f\"; (zcat \$f 2>/dev/null || cat \$f) | head -30; done",
+                "pstore (журнал до сбоя)" to "ls -la /sys/fs/pstore 2>/dev/null; for f in /sys/fs/pstore/*; do echo \"--- \$f\"; tail -n 60 \$f; done 2>/dev/null",
                 "logcat (Wi-Fi)" to "logcat -d -b main,system -v time | grep -iE 'wpa_supplicant|ClientModeImpl|WifiStateMachine|DhcpClient|CTRL-EVENT|SupplicantStaIface|NetworkMonitor' | tail -n 200",
             )
             for ((title, cmd) in cmds) {
